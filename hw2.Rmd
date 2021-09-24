@@ -1,0 +1,223 @@
+---
+title: "Statistical computing hw2"
+author: '106070020'
+date: "2021年4月12日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+###(a)
+
+```{r}
+#Q1(a)
+set.seed(123456)
+h <- function(x) exp(-x)/(1+x^2)
+integrate(h,0,1)
+n=1e6
+x<-runif(n,0,1)
+(1-0)*mean(h(x))
+```
+
+###(b)
+```{r}
+#Q1(b)
+set.seed(12345)
+x<-rexp(n=1000)
+fx<-function(x){
+  return(exp(-x)/(1+x^2))
+}
+w <- fx(x) / exp(-x)
+mean(w * x) / mean(w)
+```
+
+## Problem 2
+
+###(a)
+```{r}
+#Q2(a)
+set.seed(787638)
+rs=NULL
+XS<-NULL
+YS<-NULL
+res<- NULL
+for(i in 1:200){
+  e<-rnorm(500,0,1)
+  X<-rnorm(500,0,2)
+  Y<-1+2*X+e
+  XS<-rbind(XS,X)
+  YS<-rbind(YS,Y)
+  mod<-lm(Y~X)
+  residu<-resid(mod)
+  res<-rbind(res, residu)
+  rs<-rbind(rs,coef(mod))
+}
+mean(rs[,2])
+hist(rs[,2], main='Histogram of the estimate of beta 1')
+
+```
+
+###(c)
+```{r}
+#Q2(c)
+
+#method1(Take average)
+var(rs[,2])
+#method2(empirical)
+empvar=NULL
+for(i in 1:200){
+  empvar<-cbind(empvar,1/sum(XS[i,]^2))
+}
+mean(empvar)
+```
+
+###(d)
+```{r}
+#Q2(d)
+#random X (nonparametric resampling)
+
+boot=NULL
+for(i in 1:200){
+  bstar=NULL
+  for(j in 1:200){
+    Xstar=NULL
+    Ystar=NULL
+    Xstar <- XS[j,sample(1:500,size=500,replace=F,set.seed(6723*i*j))]
+    Ystar<-YS[j,sample(1:500,size=500,replace=F,set.seed(6723*i*j))]
+    model<-lm(Ystar~Xstar)
+    bstar <- rbind( bstar,coef(model) )
+  }
+  boot<-append(boot,bstar[,2])
+  
+}
+var(boot)
+hist(boot, main='Histogram of the estimate of beta 1 with nonparametric resampling')
+
+# Fixed X (residual resampling)
+boot1=NULL
+for(i in 1:200){
+  bstar1=NULL
+  for(j in 1:200){
+    Xstar1=NULL
+    Ystar1=NULL
+    Xstar1 <- XS[j,sample(1:500,size=500,replace=F,set.seed(1986*i*j))]
+    resid = res
+    newY<-res[j,]+(rs[j,2]*Xstar1+rs[j,1])
+    model2<-lm(newY~Xstar1)
+    bstar1 <- rbind( bstar1,coef(model2) )
+  }
+  boot1<-append(boot1,bstar1[,2])
+}
+
+var(boot1)
+hist(boot1, main='Histogram of the estimate of beta 1 with residual resampling')
+```
+
+###(e)
+```{r}
+
+#Q2(e)
+library(OTclust)
+# install.packages('OTclust')
+q2da<-as.matrix(boot)
+p1<-perturb(q2da,0)
+var(p1)
+hist(p1, main='histogram of boot with perturbation')
+q2db<-as.matrix(boot1)
+p2<-perturb(q2db,0)
+var(p2)
+hist(p2, main='histogram of boot1 with perturbation')
+q2ca<-as.matrix(rs[,2])
+p3<-perturb(q2ca,0)
+var(p3)
+hist(p3, main='histogram of asymptotic variance with perturbation')
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
