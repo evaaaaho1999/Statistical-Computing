@@ -1,0 +1,262 @@
+---
+title: "Statistical Computing HW1"
+author: '106070020'
+date: "2021-03-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Problem 1
+
+### (a)
+```{r}
+#Q1(a)
+
+set.seed(0404)
+t0 <- Sys.time()
+U1<-runif(10000,0,1)
+U2<-runif(10000,0,1)
+X<-sqrt(-2*log(U1))*cos(2*pi*U2) 
+t1 <- Sys.time()
+time_box_muller<-t1-t0
+t2 <- Sys.time()
+Y<-rnorm(10000,0,1)
+t3 <- Sys.time()
+time_rnorm<- t3-t2
+hist(X, prob=T, breaks = 100)
+curve(dnorm(x,0,1), add=T)
+#Y<-sqrt(-2*log(U1))*sin(2*pi*U2) 
+#plot(density(Y))
+op=par(mfrow=c(1,2))
+boxplot(X, main="Boxplot of box-muller method")
+boxplot(rnorm(10000,0,1),main="Boxplot of rnorm in R")
+par(op)
+time_box_muller
+time_rnorm
+```
+
+###(b)
+```{r}
+#(b)
+set.seed(1106)
+acfuc<-function(f_x){
+  f <- function(x){
+    sqrt(2/pi)*exp(-x^2/2)
+  }
+  g <- function(x){
+    exp(-x)
+  }
+  for(i in 1:length(f_x)){
+    repeat{
+      x<- -log(runif(1))#generate exp(1) using inverse CDF
+      u <- runif(1)
+      c=sqrt(2/pi)*exp(1/2)
+      if(u<f(x)/(c*g(x))){break} #accept until U1<=f(abs(x))/c*g(x) 
+    }
+    # flip a coin(using abs(x)generate normal(0,1))
+    if(runif(1)<0.5){
+      Z = x
+    }
+    else Z = -x
+    f_x[i] <- Z
+  }
+  return(f_x)
+}
+f_x <- rep(0,10000)
+c=sqrt(2/pi)*exp(1/2)
+c
+t0 <- Sys.time()
+a<-acfuc(f_x)
+
+t1 <- Sys.time()
+time_acc_rej<-t1-t0
+time_acc_rej
+hist(a,prob=T,breaks = 100) 
+curve(dnorm(x,0,1),add=T)
+op=par(mfrow=c(1,2))
+boxplot(a, main="Acceptance rejection method")
+boxplot(rnorm(10000,0,1),main="rnorm in R")
+par(op)
+paste("The acceptance rate is",1/c)
+```
+
+
+## Problem 2
+
+### (a)
+```{r}
+#Q2(a)
+set.seed(1986)
+#Lambda = 10
+p_x <- rep(0,10000)
+
+pois<-function(lambda){
+  t <- 0
+  X <- -1
+  while(t < 1){
+    t<- t-(1/lambda*log(runif(1)))
+    X<-X+1
+    }
+    return(X)
+}
+t0 <- Sys.time()
+for(i in 1:length(p_x)){
+  p_x[i]<-pois(10)
+}
+t1 <- Sys.time()
+poi_generate_time<-t1-t0
+t2<-Sys.time()
+b<-rpois(10000,10)
+t3<-Sys.time()
+rpois_time<-t3-t2
+par(mfrow=c(1,2))
+hist(p_x,prob=T,breaks = 100, main="generating poisson")
+hist(rpois(10000,10),prob=T,breaks = 100, main="generating from rpois")
+par(mfrow=c(1,2))
+boxplot(p_x,prob=T,breaks = 100, main="generating poisson")
+boxplot(rpois(10000,10),prob=T,breaks = 100, main="generating from rpois")
+poi_generate_time
+rpois_time
+```
+
+### (b)
+```{r}
+#(b)
+set.seed(1130)
+g_x <- rep(0,10000)
+gam<-function(a,b){
+  U<-runif(a,0,1)
+  X1<- -b*log(U)
+  X<-sum(X1)
+  return(X)
+}
+t0<-Sys.time()
+for(i in 1:length(g_x)){
+  g_x[i]<-gam(5,3)
+}
+t1<-Sys.time()
+generate_gamma_time<- t1-t0
+t2<-Sys.time()
+a<-rgamma(10000,5,rate = 1/3)
+t3<-Sys.time()
+rgamma_time<- t3-t2
+par(mfrow=c(1,2))
+hist(g_x,prob=T,breaks = 100, main="generating gamma")
+hist(rgamma(10000,5,rate = 1/3),prob=T,breaks = 100, main="generating from rgamma")
+
+par(mfrow=c(1,2))
+boxplot(g_x,prob=T,breaks = 100, main="generating gamma")
+boxplot(rgamma(10000,5,rate=1/3),prob=T,breaks = 100, main="generating from rgamma")
+generate_gamma_time
+rgamma_time
+
+```
+
+
+## Problem 3
+
+### (a) 
+***
+
+\[\text{Derive the marginal distribution of X} \]
+
+\[\text{Suppose }\ X|\mu \sim Poi(\mu), \mu \sim Gamma(\alpha,\beta)\]
+\[f(x;\mu)=\frac{\mu^x}{x!}e^{-\mu}\frac{1}{\Gamma(\alpha)\beta^{\alpha}}\mu^{\alpha -1}e^{\frac{-\mu}{\beta}}\]
+\[\begin{align*}f(x)=&\frac{1}{\Gamma(\alpha)\beta^{\alpha}x!}\int_0^{\infty}\mu^{x+\alpha-1}e^{-(1+1/\beta)\mu}d\mu\\=&\frac{1}{\Gamma(x+1)\Gamma(\alpha)\beta^{\alpha}}\Gamma(\alpha+x)(\frac{\beta}{1+\beta})\\=&\begin{pmatrix}\alpha-1+x\\x\end{pmatrix}(\frac{1}{1+\beta})^{\alpha}(1-\frac{1}{1+\beta})^x\end{align*}\] 
+\[\text{which } \ p=\frac{1}{1+\beta}\]
+\[\text{Thus, } \ X \sim NB(\alpha,\frac{1}{1+\beta})\]
+
+***
+
+###(b)
+
+```{r}
+#(b)
+set.seed(1209)
+lambda <- rep(0,10000)
+gam<-function(a,b){
+  U<-runif(a,0,1)
+  X1<- -b*log(U)
+  X<-sum(X1)
+  return(X)
+}
+pois<-function(lambda){
+  t <- 0
+  X <- -1
+  while(t < 1){
+    t<- t-(1/lambda*log(runif(1)))
+    X<-X+1
+  }
+  return(X)
+}
+t0<- Sys.time()
+for(i in 1:length(lambda)){
+  lambda[i]<-gam(5,3)
+}
+gp=rep(0,10000)
+for(i in 1:length(lambda)){
+  gp[i]<-pois(lambda[i])
+}
+t1<-Sys.time()
+time_mix<-t1-t0
+t2<-Sys.time()
+nb<-rnbinom(10000, 5, 1/4)
+t3<-Sys.time()
+nbtime<-t3-t2
+par(mfrow=c(1,2))
+hist(gp,prob=T,breaks = 100, main="mixture of gamma and poisson")
+hist(nb,prob=T,breaks = 100,main="negetive binomial distribution")
+
+par(mfrow=c(1,2))
+boxplot(gp,prob=T,breaks = 100, main="mixture of gamma and poisson")
+boxplot(nb,prob=T,breaks = 100, main="negetive binomial distribution")
+time_mix
+nbtime
+```
+
+### (c)
+```{r}
+#(c)
+paste("The mean of X is",mean(gp), "The mean of NB(5,1/4) is", mean(nb))
+paste("The variance of X is",var(gp), "The varance of NB(5,1/4) is", var(nb))
+```
+
+
+## Problem 4
+
+### (a)
+***
+
+$n=2$, $(p_1,p_2)=(p_1,1-p_1)$, $\mu=(0,3)$, and $\sigma=(1,1)$<br>
+\[\text{The finite mixture distribution is} \]
+\[p_1N(0,1)+(1-p_1)N(3,1)\]
+\[f(x)=\frac{p_1}{\sqrt{2\pi}}exp\{-\frac{1}{2}(x)^2\}+\frac{1-p_1}{\sqrt{2\pi}}exp\{-\frac{1}{2}(x-3)^2\}\]
+
+***
+
+### (b)
+```{r}
+#Q4(b)
+set.seed(0525)
+U <-runif(10000,0,1)
+rand<-rep(0, 10000)
+for(i in 1:length(rand)){
+  if(U[i]<.75){
+    rand[i]<-rnorm(1,0,1)
+  }else{
+    rand[i]<-rnorm(1,3,1)
+  }
+}
+hist(rand,prob=T,breaks = 500, main="The distribution of X")
+
+```
+
+
+
+
+
+
